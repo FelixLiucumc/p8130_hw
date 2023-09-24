@@ -1,6 +1,6 @@
 ---
 title: "p8130_hw1_yl5508"
-author: "Felix LIU"
+author: "Yifei LIU"
 date: 2023/9/23
 output: html_document
 ---
@@ -51,6 +51,14 @@ For car crash DepScore, the characteristic of its distribution is right-skewed a
 Group Bike Crash probably have a lower typical depression score. Cause both the median(`r round(median(bikecrash_depscore), 2)`) and mean(`r round(mean(bikecrash_depscore), 2)`) of the bike crash depression score are lower than those of car crash (median(`r round(median(carcrash_depscore), 2)`) and mean(`r round(mean(carcrash_depscore), 2)`)).
 
 ## Problem 3
+
+**(a)** $p(A) = 6/12 = 1/2$.  
+**(b)** $p(B) = 1/12$.  
+**(c)** $\because B \subset A\ \therefore p(B \cup A) = p(A) = 1/2$.  
+**(d)** $\because p(A \cup B) = p(A) + p(B) - p(A \cap B)\ \therefore p(A \cap B) = p(A) + p(B) - p(A \cup B) = 1/2 + 1/12 -1/2 = 1/12$  
+$\because p(A \cap B) \neq p(A) \times p(B)\ \therefore event\ A\ and\ B\ are\ not\ independent$.  
+
+
 
 
 
