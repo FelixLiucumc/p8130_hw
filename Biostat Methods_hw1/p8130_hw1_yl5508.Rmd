@@ -56,9 +56,18 @@ Group Bike Crash probably have a lower typical depression score. Cause both the 
 **(b)** $p(B) = 1/12$.  
 **(c)** $\because B \subset A\ \therefore p(B \cup A) = p(A) = 1/2$.  
 **(d)** $\because p(A \cup B) = p(A) + p(B) - p(A \cap B)\ \therefore p(A \cap B) = p(A) + p(B) - p(A \cup B) = 1/2 + 1/12 -1/2 = 1/12$  
-$\because p(A \cap B) \neq p(A) \times p(B)\ \therefore event\ A\ and\ B\ are\ not\ independent$.  
+$\because p(A \cap B) \neq p(A) \times p(B)\ \therefore$ event A and B are not independent$.  
 
+## Problem 4
 
+$event\ A:\ 75+\ ys\ woman\ has\ a\ positive\ scan\ finding$  
+$event\ B:\ 75+\ ys\ woman\ has\ dementia$  
 
+$p(B) = 0.05$
+$p(A|B) = p(A \cap B) / p(B) = 0.8$
+$p(A|B^\complement) = p(A \cap B^\complement) / p(B^\complement) = 0.1$  
 
-
+$p(B^\complement) = 1 - p(B) = 0.95$
+According to $Bayes'\ Rule$,  
+$p(B|A) = \frac{p(A|B)\times p(B)}{p(A|B)\times p(B) + p(A|B^\complement)\times p(B^\complement)} = \frac{0.8\times 0.05}{0.8\times 0.05+0.1\times 0.95} = 0.296$  
+So, the probability that the woman who has a positive scan finding may have dementia is 29.6%.
