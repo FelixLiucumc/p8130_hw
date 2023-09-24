@@ -2,7 +2,9 @@
 title: "p8130_hw1_yl5508"
 author: "Yifei LIU"
 date: 2023/9/23
-output: html_document
+output: 
+ pdf_document: 
+  latex_engine: xelatex
 ---
 
 ## Problem 1
@@ -60,8 +62,8 @@ $\because p(A \cap B) \neq p(A) \times p(B)\ \therefore$ event A and B are not i
 
 ## Problem 4
 
-$event\ A:\ 75+\ ys\ woman\ has\ a\ positive\ scan\ finding$  
-$event\ B:\ 75+\ ys\ woman\ has\ dementia$  
+$event\ A:\ 75+\ y's\ woman\ has\ a\ positive\ scan\ finding$  
+$event\ B:\ 75+\ y's\ woman\ has\ dementia$  
 
 $p(B) = 0.05$
 $p(A|B) = p(A \cap B) / p(B) = 0.8$
@@ -69,5 +71,5 @@ $p(A|B^\complement) = p(A \cap B^\complement) / p(B^\complement) = 0.1$
 
 $p(B^\complement) = 1 - p(B) = 0.95$
 According to $Bayes'\ Rule$,  
-$p(B|A) = \frac{p(A|B)\times p(B)}{p(A|B)\times p(B) + p(A|B^\complement)\times p(B^\complement)} = \frac{0.8\times 0.05}{0.8\times 0.05+0.1\times 0.95} = 0.296$  
+$p(B|A) = \frac{p(A|B)\times p(B)}{p(A|B)\times p(B) + p(A|B^\complement)\times p(B^\complement)} = \frac{0.8\times 0.05}{0.8\times 0.05+0.1\times 0.95} \approx 0.296$  
 So, the probability that the woman who has a positive scan finding may have dementia is 29.6%.
