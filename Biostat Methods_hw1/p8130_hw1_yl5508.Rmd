@@ -35,9 +35,11 @@ boxplot(bikecrash_depscore)
 hist(bikecrash_depscore)
 ```
 
-We can see characteristics of underlying distribution: right-skewed,  unimodal distribution.
+**(b)** We can see characteristics of underlying distribution: right-skewed,  unimodal distribution.
 
 ### Problem 2.2
+
+**(a)** side-by-side boxplot (bikecrash vs carcrash)
 
 ```{r}
 carcrash_depscore = c(67, 50, 85, 43, 64, 35, 47, 97, 58, 58, 10, 56, 50)
@@ -45,12 +47,15 @@ boxplot(bikecrash_depscore, carcrash_depscore,
         xlab = "Group", ylab = "DepScore", 
         names = c("Bike Crash", "Car Crash"), 
         main = "Bike Crash DepScore vs Car Crash DepScore")
+```
+
+```{r}
 hist(carcrash_depscore)
 ```
 
-For car crash DepScore, the characteristic of its distribution is right-skewed and Unimodal.  
+**(b)** For car crash DepScore, the characteristic of its distribution is right-skewed and Unimodal.  
 
-Group Bike Crash probably have a lower typical depression score. Cause both the median(`r round(median(bikecrash_depscore), 2)`) and mean(`r round(mean(bikecrash_depscore), 2)`) of the bike crash depression score are lower than those of car crash (median(`r round(median(carcrash_depscore), 2)`) and mean(`r round(mean(carcrash_depscore), 2)`)).
+**(c)** Group Bike Crash probably have a lower typical depression score. Cause both the median(`r round(median(bikecrash_depscore), 2)`) and mean(`r round(mean(bikecrash_depscore), 2)`) of the bike crash depression score are lower than those of car crash (median(`r round(median(carcrash_depscore), 2)`) and mean(`r round(mean(carcrash_depscore), 2)`)).
 
 ## Problem 3
 
