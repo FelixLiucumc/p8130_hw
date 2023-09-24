@@ -1,0 +1,56 @@
+---
+title: "p8130_hw1_yl5508"
+author: "Felix LIU"
+date: 2023/9/23
+output: html_document
+---
+
+## Problem 1
+
+**(a)** ordinal.  
+**(b)** binary.  
+**(c)** nominal.  
+**(d)** continuous.  
+**(e)** discrete.  
+
+## Problem 2
+
+### Problem 2.1
+
+```{r, results = 'hide'}
+bikecrash_depscore = c(45, 39, 25, 47, 49, 5, 70, 99, 74, 37, 99, 35, 8, 59)
+mean(bikecrash_depscore)
+median(bikecrash_depscore)
+range(bikecrash_depscore)
+sd(bikecrash_depscore)
+#Like var, sd uses denominator n−1.
+```
+
+**(a)** Descriptive summaries: (mean) `r round(mean(bikecrash_depscore), 2)`, (median) `r round(median(bikecrash_depscore), 2)`, (range) `r round(range(bikecrash_depscore), 2)`, (sd) `r round(sd(bikecrash_depscore), 2)`.
+
+```{r}
+boxplot(bikecrash_depscore)
+hist(bikecrash_depscore)
+```
+
+We can see characteristics of underlying distribution: right-skewed,  unimodal distribution.
+
+### Problem 2.2
+
+```{r}
+carcrash_depscore = c(67, 50, 85, 43, 64, 35, 47, 97, 58, 58, 10, 56, 50)
+boxplot(bikecrash_depscore, carcrash_depscore, 
+        xlab = "Group", ylab = "DepScore", 
+        names = c("Bike Crash", "Car Crash"), 
+        main = "Bike Crash DepScore vs Car Crash DepScore")
+hist(carcrash_depscore)
+```
+
+For car crash DepScore, the characteristic of its distribution is right-skewed and Unimodal.  
+
+Group Bike Crash probably have a lower typical depression score. Cause both the median(`r round(median(bikecrash_depscore), 2)`) and mean(`r round(mean(bikecrash_depscore), 2)`) of the bike crash depression score are lower than those of car crash (median(`r round(median(carcrash_depscore), 2)`) and mean(`r round(mean(carcrash_depscore), 2)`)).
+
+## Problem 3
+
+
+
