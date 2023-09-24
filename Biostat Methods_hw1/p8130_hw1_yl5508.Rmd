@@ -35,7 +35,14 @@ boxplot(bikecrash_depscore)
 hist(bikecrash_depscore)
 ```
 
-**(b)** We can see characteristics of underlying distribution: right-skewed,  unimodal distribution.
+**(b)** Some key elements of the boxplot of bike crash:  
+(1) maximum: `r max(bikecrash_depscore)`.  
+(2) minimum: `r min(bikecrash_depscore)`.  
+(3) 1st quartile is around 35.  
+(4) 3rd quartile is around 70.  
+(5) median is around 40.  
+(6) no outlier.  
+We can see characteristics of underlying distribution: right-skewed, unimodal distribution.
 
 ### Problem 2.2
 
@@ -53,7 +60,14 @@ boxplot(bikecrash_depscore, carcrash_depscore,
 hist(carcrash_depscore)
 ```
 
-**(b)** For car crash DepScore, the characteristic of its distribution is right-skewed and Unimodal.  
+**(b)** Some key elements of the boxplot of car crash:  
+(1) maximum: `r max(carcrash_depscore)`.  
+(2) minimum: `r min(carcrash_depscore)`.  
+(3) 1st quartile is around 45.  
+(4) 3rd quartile is around 65.  
+(5) median is around 55.  
+(6) there's one outlier.  
+For car crash DepScore, the characteristic of its distribution is right-skewed and Unimodal.  
 
 **(c)** Group Bike Crash probably have a lower typical depression score. Cause both the median(`r round(median(bikecrash_depscore), 2)`) and mean(`r round(mean(bikecrash_depscore), 2)`) of the bike crash depression score are lower than those of car crash (median(`r round(median(carcrash_depscore), 2)`) and mean(`r round(mean(carcrash_depscore), 2)`)).
 
