@@ -1,6 +1,6 @@
 ---
 title: "p8130_hw1_yl5508"
-author: "Yifei LIU"
+author: "Yifei LIU (yl5508)"
 date: 2023/9/23
 output: 
  pdf_document: 

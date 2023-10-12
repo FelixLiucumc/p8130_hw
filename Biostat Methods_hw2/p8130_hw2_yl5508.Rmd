@@ -1,0 +1,88 @@
+---
+title: "p8130_hw2_yl5508"
+author: "Yifei LIU (yl5508)"
+date: 2023/10/11
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setting, echo = FALSE}
+options(scipen = 999)
+options(digits = 2)
+```
+
+
+## Problem 1
+
+**(a)** $P(exactly\ 40)=\binom{56}{40} \cdot (0.73)^{40} \cdot (1 - 0.73)^{16}=0.113=11.3\%$  
+**(b)** 
+```{r p1(b)}
+trial = 56
+success = 39
+p = 0.73
+print(1-pbinom(success,trial,p))
+```
+The probability that at least 40 of them have at least 1 checkup is `r 1-pbinom(success,trial,p)`.  
+**(c)** The condition we should check before using Poisson appoximation to binomial is:  
+- n must be large (n>100): in this problem, n=56<100.  
+- Probability of success p should be small (p<0.01): in this problem, p is 0.73.  
+As a result, we should not use Poisson as an approximation to binomial.  
+**(d)** Expectation of a binomial R.V. is `E[X] = np`, which is `r trial*p`.  
+**(e)** Variance of a binomial R.V. is `Var(x) = np(1-p)`, which is `r trial*p*(1-p)`. The standard deviation of it would be `r sqrt(trial*p*(1-p))`($sd=\sqrt{}$).  
+
+## Problem 2
+
+**(a)**
+```{r p2(a)}
+print(ppois(2,6))
+```
+The PMF of Poisson distribution can be expressed as $P(X = k) = \frac{e^{-\lambda} \cdot \lambda^k}{k!}$.  
+For tornado happened fewer than 3 times, $P(X < 3) = P(X = 0) + P(X = 1) + P(X = 2) = \sum_{k=0}^{2}\frac{e^{-6} \cdot 6^k}{k!} = 0.062 = 6.2\%$.  
+**(b)** 
+```{r p2(b)}
+print(dpois(3,6))
+```
+The probability that tornado will happen exactly 3 tims is `r dpois(3,6)`.  
+**(c)** 
+```{r p2(c)}
+print(1-ppois(3,6))
+```
+The probability that tornado will happen more than 3 tims is `r 1-ppois(3,6)`.  
+
+## Problem 3
+
+**(a)** 
+```{r p3(a)}
+print(1-pnorm(137,128,10.2))
+```
+The probability of a selected American man (20-29) with systolic blood pressure above 137.0 is `r 1-pnorm(137,128,10.2)`.  
+**(b)**
+```{r p3(b)}
+print(pnorm(125,128,10.2/sqrt(50)))
+```
+The population distribution of the R.V. is normal and the sample size is larger than 30. So, we can denote the sampling distribution as $\overline{X}\sim N(\mu,\frac{\sigma^{2}}{n})$, which is $\overline{X}\sim N(128,\frac{10.2}{\sqrt{50}})$ in this problem. The probability that sample mean will be less than 125.0 is `r pnorm(125,128,10.2/sqrt(50))`.  
+**(c)** 
+```{r p3(c)}
+print(qnorm(0.9,128,10.2/sqrt(40)))
+```
+For sample size of 40, the sampling distribution would follow: $\overline{X}\sim N(128,\frac{10.2}{\sqrt{40}})$. The 90th percentile of the sampling distribution is `r qnorm(0.9,128,10.2/sqrt(40))`.  
+
+## Problem 4
+
+**(a)** For sample size of 40 (>30), the sampling distribution would follow: $\overline{X}\sim N(80,10)$. In this case, standard error(SE) is $\sigma_{\overline{X}}=\frac{\sigma^{2}}{n}=10$.  
+So, the confidence interval(CI) for the population mean pulse rate would be shown as $P(\mu-2\sigma_{\overline{X}}<X<\mu+2\sigma_{\overline{X}}) = 0.95$, among which CI is $60<X<100$.  
+**(b)** The confidence interval calculated above means that, for most (95%) of the random variables, $\overline{X}$ will fall within +/- 2SE of the true mean $\mu$.  
+**(c)** Using method of tests for the mean of a normal distribution with known variance.  
+Suppose that $\mu_0=70$, and $H_0:\mu=\mu_0$ vs $H_1:\mu\neq\mu_0$.  
+With the significant level $\alpha=0.01$, test statistic is $z=\frac{\overline{X}-\mu_0}{\sigma/\sqrt{n}}=\frac{80-70}{10}=1$.  
+Criteria:  
+- Reject $H_0$: if $|z|>z_{1-0.05}$,  
+- Fail to reject $H_0$: if $|z|\leq z_{1-0.05}$. 
+```{r p4(c)}
+print(qnorm(0.95,0,1))
+```
+$z_{1-0.05} = z_{0.95}=1.64$.  
+Cause $z<z_{1-0.05}$, we fail to reject $H_0$.  
+With significant level $\alpha=0.01$, we cannot reject $H_0$ and the mean pulse of young women suffering from fibromyalagia is equal to 70.
+
