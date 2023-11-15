@@ -12,7 +12,7 @@
 <meta name="author" content="Yifei LIU (yl5508)" />
 
 
-<title>p8130_hw2_yl5508</title>
+<title>p8130_hw3_yl5508</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,135 +349,332 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">p8130_hw2_yl5508</h1>
+<h1 class="title toc-ignore">p8130_hw3_yl5508</h1>
 <h4 class="author">Yifei LIU (yl5508)</h4>
-<h4 class="date">2023/10/11</h4>
+<h4 class="date">2023/10/27</h4>
 
 </div>
 
 
+<pre class="r"><code>library(tidyverse)
+library(MASS)
+data(&quot;birthwt&quot;)
+birth_data = as_tibble(birthwt)</code></pre>
 <div id="problem-1" class="section level2">
 <h2>Problem 1</h2>
-<p><strong>(a)</strong> <span class="math inline">\(P(exactly\
-40)=\binom{56}{40} \cdot (0.73)^{40} \cdot (1 -
-0.73)^{16}=0.113=11.3\%\)</span></p>
-<p><strong>(b)</strong></p>
-<pre class="r"><code>trial = 56
-success = 39
-p = 0.73
-print(1-pbinom(success,trial,p))</code></pre>
-<pre><code>## [1] 0.6678734</code></pre>
-<p>The probability that at least 40 of them have at least 1 checkup is
-0.6678734.</p>
-<p><strong>(c)</strong> <strong>(1)</strong> The condition we should
-check before using Poisson appoximation to binomial is:<br />
-- n must be large (n&gt;100): in this problem, n=56&lt;100.<br />
-- Probability of success p should be small (p&lt;0.01): in this problem,
-p is 0.73.<br />
-As a result, we should not use Poisson as an approximation to
-binomial.<br />
-<strong>(2)</strong> Try to use normal approximation:<br />
-- np≥10: <span class="math inline">\(np=56\cdot0.73=40.88&gt;10\)</span><br />
-- n(1-p)≥10: <span class="math inline">\(n(1-p)=56\cdot(1-0.73)=15.12&gt;10\)</span><br />
-So, we can use normal approximation to binomial. The normal
-approximation distribution would be <span class="math inline">\(N~(40.88,11.04)\)</span></p>
-<pre class="r"><code>mu_norm = 56*0.73
-sd_norm = sqrt(56*0.73*(1-0.73))
-norm_eql40 = pnorm(40.5,mu_norm,sd_norm)-pnorm(39.5,mu_norm,sd_norm)
-norm_leq40 = 1-pnorm(39.5,mu_norm,sd_norm)
-print(c(mu_norm,sd_norm,norm_eql40,norm_leq40))</code></pre>
-<pre><code>## [1] 40.8800000  3.3222884  0.1155355  0.6610668</code></pre>
-<p>For problem (a): using normal approximation to binomial, we get
-possibility 11.6%.<br />
-For problem (b): using normal approximation to binomial, we get
-possibility 66.1%.<br />
-The results shown above is quite close to the results we have calculated
-from binomial.</p>
-<p><strong>(d)</strong> Expectation of a binomial R.V. is
-<code>E[X] = np</code>, which is 40.88.</p>
-<p><strong>(e)</strong> Variance of a binomial R.V. is
-<code>Var(x) = np(1-p)</code>, which is 11.0376. The standard deviation
-of it would be 3.3222884(<span class="math inline">\(sd=\sqrt{Var(x)}\)</span>).</p>
+<p><strong>(a)</strong></p>
+<pre class="r"><code>#one-sample t-test, unknown variance
+t_lower = qt(0.025,188)
+t_upper = qt(0.975,188)
+print(paste(&quot;(&quot;, mean(birth_data$lwt)+t_lower*sd(birth_data$lwt)/sqrt(nrow(birth_data)), &quot;,&quot;, mean(birth_data$lwt)+t_upper*sd(birth_data$lwt)/sqrt(nrow(birth_data)), &quot;)&quot;))</code></pre>
+<pre><code>## [1] &quot;( 125.426976563035 , 134.202653066594 )&quot;</code></pre>
+<p>Treat data <code>lwt</code> from <code>birthwt</code> dataset as a
+sample:<br />
+- Sample size: 189<br />
+- Sample mean: 129.8148148<br />
+- Sample sd: 30.5793804<br />
+For true σ from population is unknown, we need to calculate the
+estimated standard error: <span class="math inline">\(\frac{s}{\sqrt{n}}=\frac{30.6}{\sqrt{189}}=2.2\)</span>.<br />
+For two-sided test, <span class="math inline">\(t_{n-1,1-\alpha/2}=1.97\)</span>.<br />
+So, the confidence interval(CI) for the population mean weight of
+American women is <span class="math inline">\(125.4&lt;\mu&lt;134.2\)</span>.<br />
+</p>
+<p><strong>(b)</strong> We are 95% confident that the true population
+mean lies between the lower (125.4) and the upper (134.2) limits of the
+interval.<br />
+OR: Over the collection of all 95% confidence intervals that could be
+constructed from repeated samples of size n (189), 95% of them will
+contain the true population mean.<br />
+</p>
+<p><strong>(c)</strong> Because the population mean(171) doesn’t lie in
+the confidential interval(125.4&lt;μ&lt;134.2), we can say that the
+medical claim about average weight of American women is not true
+(probability of which is less than 5%), or the sample we have cannot
+correctly reflect the character of population.<br />
+</p>
 </div>
 <div id="problem-2" class="section level2">
 <h2>Problem 2</h2>
 <p><strong>(a)</strong></p>
-<pre class="r"><code>print(ppois(2,6))</code></pre>
-<pre><code>## [1] 0.0619688</code></pre>
-<p>The PMF of Poisson distribution can be expressed as <span class="math inline">\(P(X = k) = \frac{e^{-\lambda} \cdot
-\lambda^k}{k!}\)</span>.<br />
-For tornado happened fewer than 3 times, <span class="math inline">\(P(X
-&lt; 3) = P(X = 0) + P(X = 1) + P(X = 2) = \sum_{k=0}^{2}\frac{e^{-6}
-\cdot 6^k}{k!} = 0.062 = 6.2\%\)</span>.</p>
-<p><strong>(b)</strong></p>
-<pre class="r"><code>print(dpois(3,6))</code></pre>
-<pre><code>## [1] 0.08923508</code></pre>
-<p>The probability that tornado will happen exactly 3 tims is
-0.0892351.</p>
-<p><strong>(c)</strong></p>
-<pre class="r"><code>print(1-ppois(3,6))</code></pre>
-<pre><code>## [1] 0.8487961</code></pre>
-<p>The probability that tornado will happen more than 3 tims is
-0.8487961.</p>
+<pre class="r"><code>lwt_smo =
+  birth_data |&gt;
+  filter(smoke == 1) |&gt;
+  dplyr::select(lwt)
+
+lwt_nsm =
+  birth_data |&gt;
+  filter(smoke == 0) |&gt;
+  dplyr::select(lwt)</code></pre>
+<ul>
+<li>Sample size: 74(smoking group) and 115(non-smoking group)<br />
+</li>
+<li>Sample mean: 128.1351351(smoking group) and 130.8956522(non-smoking
+group)<br />
+</li>
+<li>Sample sd: 33.7867301(smoking group) and 28.4269991(non-smoking
+group)<br />
+</li>
+</ul>
+<p>Test for equality of variances.<br />
+Testing the hypotheses: <span class="math inline">\(H_0:\sigma^{2}_{1}=\sigma^{2}_{2},\
+H_1:\sigma^{2}_{1}\neq\sigma^{2}_{2}\)</span><br />
+With α = 0.05, compute the test statistic: <span class="math inline">\(F=\frac{s^{2}_{1}}{s^{2}_{2}}=\frac{{33.8}^{2}}{{28.4}^{2}}=1.4\)</span><br />
+Critical value: <span class="math inline">\(F_{73,114,0.975}\)</span>=1.5046602, <span class="math inline">\(F_{73,114,0.025}\)</span>=0.6518345<br />
+Reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(F_{stat}&lt;F_{n_1-1,\ n_2-1,\
+1-\alpha/2}\)</span> or <span class="math inline">\(F_{stat}&gt;F_{n_1-1,\ n_2-1,\
+\alpha/2}\)</span><br />
+Fail to reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(F_{n_1-1,\ n_2-1,\ \alpha/2}\leq F_{stat}\leq
+F_{n_1-1,\ n_2-1,\ 1-\alpha/2}\)</span><br />
+Cause <span class="math inline">\(0.7&lt;F_{stat}&lt;1.5\)</span>, we
+fail to reject the null hypothesis, meaning we do not have evidence that
+the variances are unequal between smoking group and non-smoking
+group.<br />
+</p>
+<pre class="r"><code>#or we can use R code.
+var.test(lwt ~ smoke, data = birth_data, alternative = &quot;two.sided&quot;, conf.level = 0.95)</code></pre>
+<pre><code>## 
+##  F test to compare two variances
+## 
+## data:  lwt by smoke
+## F = 0.7079, num df = 114, denom df = 73, p-value = 0.09744
+## alternative hypothesis: true ratio of variances is not equal to 1
+## 95 percent confidence interval:
+##  0.4614313 1.0651436
+## sample estimates:
+## ratio of variances 
+##          0.7078964</code></pre>
+<pre class="r"><code>#p-value&gt;0.05, fail to reject H0.</code></pre>
+<p><strong>(b)</strong> Given that we fail to consider the variances as
+equal, we shall use 2 independt samples t-test for unknown population
+variance with equal sample variances.<br />
+</p>
+<p><strong>(c)</strong><br />
+Testing the hypotheses: <span class="math inline">\(H_0:\mu_{1}=\mu_{2},\
+H_1:\mu_{1}\neq\mu_{2}\)</span><br />
+Compute: <span class="math inline">\(s^2=\frac{(n_1-1)s^2_1+(n_2-1)s^2_2}{n_1+n_2-2}=\frac{73\cdot{33.8}^2+114\cdot{28.4}^2}{74+115-2}=938.3\)</span>
+With α = 0.1, compute the test statistic: <span class="math inline">\(t=\frac{\overline{X_1}-\overline{X_2}}{s\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}}=\frac{128.1-130.9}{\sqrt{938.3}\cdot\sqrt{\frac{1}{74}+\frac{1}{115}}}=-0.6\)</span><br />
+Critical value: <span class="math inline">\(t_{n_1+n_2-2,1-\alpha/2}=t_{187,0.95}\)</span>=1.6530429<br />
+Reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|t|&gt;t_{n_1+n_2-2,1-\alpha/2}\)</span><br />
+Fail to reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|t|\leq t_{n_1+n_2-2,1-\alpha/2}\)</span><br />
+Cause <span class="math inline">\(|t_{stat}|=0.6&lt;1.7\)</span>, we
+fail to reject the null hypothesis, meaning we do not have evidence that
+the mean number is different between smoking group and non-smoking
+group.<br />
+</p>
+<pre class="r"><code>#or we can use R code.
+t.test(lwt ~ smoke, data = birth_data, alternative = &quot;two.sided&quot;, conf.level = 0.9, var.equal = TRUE)</code></pre>
+<pre><code>## 
+##  Two Sample t-test
+## 
+## data:  lwt by smoke
+## t = 0.60473, df = 187, p-value = 0.5461
+## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
+## 90 percent confidence interval:
+##  -4.785414 10.306448
+## sample estimates:
+## mean in group 0 mean in group 1 
+##        130.8957        128.1351</code></pre>
+<pre class="r"><code>#p-value&gt;0.05, fail to reject H0.</code></pre>
 </div>
 <div id="problem-3" class="section level2">
 <h2>Problem 3</h2>
 <p><strong>(a)</strong></p>
-<pre class="r"><code>print(1-pnorm(137,128,10.2))</code></pre>
-<pre><code>## [1] 0.188793</code></pre>
-<p>The probability of a selected American man (20-29) with systolic
-blood pressure above 137.0 is 0.188793.</p>
-<p><strong>(b)</strong></p>
-<pre class="r"><code>print(pnorm(125,128,10.2/sqrt(50)))</code></pre>
-<pre><code>## [1] 0.01877534</code></pre>
-<p>The population distribution of the R.V. is normal and the sample size
-is larger than 30. So, we can denote the sampling distribution as <span class="math inline">\(\overline{X}\sim
-N(\mu,\frac{\sigma^{2}}{n})\)</span>, which is <span class="math inline">\(\overline{X}\sim
-N(128,\frac{10.2}{\sqrt{50}})\)</span> in this problem. The probability
-that sample mean will be less than 125.0 is 0.0187753.</p>
-<p><strong>(c)</strong></p>
-<pre class="r"><code>print(qnorm(0.9,128,10.2/sqrt(40)))</code></pre>
-<pre><code>## [1] 130.0668</code></pre>
-<p>For sample size of 40, the sampling distribution would follow: <span class="math inline">\(\overline{X}\sim
-N(128,\frac{10.2}{\sqrt{40}})\)</span>. The 90th percentile of the
-sampling distribution is 130.0668372.</p>
+<pre class="r"><code>lwt_hyp =
+  birth_data |&gt;
+  filter(ht == 1) |&gt;
+  dplyr::select(lwt)
+
+lwt_nhy =
+  birth_data |&gt;
+  filter(ht == 0) |&gt;
+  dplyr::select(lwt)</code></pre>
+<ul>
+<li>Sample size: 12(hypertension group) and 177(non-hypertension
+group)<br />
+</li>
+<li>Sample mean: 157.5(hypertension group) and
+127.9378531(non-hypertension group)<br />
+</li>
+<li>Sample sd: 47.0348034(hypertension group) and
+28.3687484(non-hypertension group)<br />
+</li>
+</ul>
+<p>From data shown above, <span class="math inline">\(\hat{p}=\frac{12}{189}=0.06\)</span><br />
+A 99% confidence interval for one population proportion is given by:
+<span class="math inline">\((\hat{p}-z_{1-\alpha/2}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}},\hat{p}+z_{1-\alpha/2}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}})\)</span>,
+i.e. <span class="math inline">\((0.06-z_{0.995}\sqrt{\frac{0.06(1-0.06)}{189}},0.06+z_{0.995}\sqrt{\frac{0.06(1-0.06)}{189}})\)</span>=(0.018,0.109)<br />
+Interpretation: We are 99% confident that the true population proportion
+lies between the lower (0.018) and the upper (0.109) limits of the
+interval. The given 20% proportion is out of such interval, so we shall
+reject the hypothesis at the α=0.1 level that CDC’s claim is not
+true.<br />
+</p>
+<pre class="r"><code>#or use R code.
+prop.test(nrow(lwt_hyp),nrow(birth_data),p = 0.2, alternative = &quot;two.sided&quot;, conf.level = 0.99)</code></pre>
+<pre><code>## 
+##  1-sample proportions test with continuity correction
+## 
+## data:  nrow(lwt_hyp) out of nrow(birth_data), null probability 0.2
+## X-squared = 21.167, df = 1, p-value = 4.21e-06
+## alternative hypothesis: true p is not equal to 0.2
+## 99 percent confidence interval:
+##  0.02926609 0.12892679
+## sample estimates:
+##          p 
+## 0.06349206</code></pre>
+<p><strong>(b)</strong><br />
+Testing the hypotheses: <span class="math inline">\(H_0:p = p_0,\
+H_1:p&lt;p_0\)</span><br />
+With α = 0.1, compute the test statistic: <span class="math inline">\(z=\frac{\hat{p}-p_0}{\sqrt{p_0(1-p_0)/n}}=\frac{0.06-0.20}{\sqrt{0.2(1-0.2)/189}}=-4.8\)</span><br />
+Critical value: <span class="math inline">\(z_{\alpha}=z_{0.1}\)</span>=-1.2815516<br />
+Reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(z&lt;z_{\alpha}\)</span><br />
+Fail to reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(z\geq z_{\alpha}\)</span><br />
+Cause <span class="math inline">\(z_{stat}=-4.8&lt;-1.3\)</span>, we
+would reject the null hypothesis at the α=0.1 level, meaning we have
+evidence that the true proportion is less than what CDC claims is.<br />
+</p>
+<pre class="r"><code>#or use R code.
+prop.test(nrow(lwt_hyp),nrow(birth_data),p = 0.2, alternative = &quot;less&quot;, conf.level = 0.9)</code></pre>
+<pre><code>## 
+##  1-sample proportions test with continuity correction
+## 
+## data:  nrow(lwt_hyp) out of nrow(birth_data), null probability 0.2
+## X-squared = 21.167, df = 1, p-value = 2.105e-06
+## alternative hypothesis: true p is less than 0.2
+## 90 percent confidence interval:
+##  0.00000000 0.09324317
+## sample estimates:
+##          p 
+## 0.06349206</code></pre>
+<pre class="r"><code>#p-value&lt;0.1, reject H0.</code></pre>
 </div>
 <div id="problem-4" class="section level2">
 <h2>Problem 4</h2>
-<p><strong>(a)</strong></p>
-<pre class="r"><code>#t statistic
-t_975 = qt(0.975,39)
-print(t_975)</code></pre>
-<pre><code>## [1] 2.022691</code></pre>
-<p>For true σ from population is unknown, we need to calculate the
-estimated standard error: <span class="math inline">\(\frac{s}{\sqrt{n}}=\frac{10}{\sqrt{40}}=1.58\)</span>.<br />
-So, the confidence interval(CI) for the population mean pulse rate would
-be shown as <span class="math inline">\(P(\overline{X}-2.02\sigma_{\overline{X}}&lt;\mu&lt;\overline{X}+2.02\sigma_{\overline{X}})
-= 0.95\)</span>, among which CI is <strong><span class="math inline">\(76.81&lt;\mu&lt;83.19\)</span></strong>.</p>
-<p><strong>(b)</strong> The confidence interval calculated above means
-that, for most (95%) of the random variables, <span class="math inline">\(\overline{X}\)</span> will fall within +/- 2.02
-estimated SE of the true mean <span class="math inline">\(\mu\)</span>.
-The 95% CI is <span class="math inline">\((76.81,83.19)\)</span>.</p>
-<p><strong>(c)</strong></p>
-<pre class="r"><code>#statistic t
-t = abs((80-70)/(10/sqrt(40)))
-t_995 = qt(0.995,39)
-print(c(t,t_995))</code></pre>
-<pre><code>## [1] 6.324555 2.707913</code></pre>
-<p>Using method of tests for the mean of a normal distribution with
-known variance.<br />
-Suppose that <span class="math inline">\(\mu_0=70\)</span>, and <span class="math inline">\(H_0:\mu=\mu_0\)</span> vs <span class="math inline">\(H_1:\mu\neq\mu_0\)</span>.<br />
-With the significant level <span class="math inline">\(\alpha=0.01\)</span>, test statistic is <span class="math inline">\(t=\frac{\overline{X}-\mu_0}{s/\sqrt{n}}=\frac{80-70}{10/\sqrt{40}}=6.32\)</span>.<br />
-Criteria:<br />
-- Reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|t|&gt;t_{39,0.995}\)</span>,<br />
-- Fail to reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|t|\leq t_{39,0.995}\)</span>. <span class="math inline">\(t_{39,0.995}=2.71\)</span>.<br />
-Cause <span class="math inline">\(|t|&gt;t_{39,0.995}\)</span>, we can
-reject <span class="math inline">\(H_0\)</span>.<br />
-Result: with significant level <span class="math inline">\(\alpha=0.01\)</span>, we should reject <span class="math inline">\(H_0\)</span> and the mean pulse of young women
-suffering from fibromyalagia isnot equal to 70. In other words, the
-possibility of getting a sample with a mean equivalent to 80 or more
-extreme than that is less than 1%, given that the population mean is
-70.</p>
+<pre class="r"><code>ui_smo =
+  birth_data |&gt;
+  filter(smoke == 1) |&gt;
+  dplyr::select(ui)
+
+ui_nsm =
+  birth_data |&gt;
+  filter(smoke == 0) |&gt;
+  dplyr::select(ui)</code></pre>
+<ul>
+<li>Sample size: 74(smoking group) and 115(non-smoking group)<br />
+</li>
+<li>Sample proportion: 0.3915344(smoking group) and
+0.6084656(non-smoking group)<br />
+</li>
+</ul>
+<p>Testing the hypotheses: <span class="math inline">\(H_0:p_1=p_2,\
+H_1:p_1\neq p_2\)</span><br />
+<span class="math inline">\(\hat{p}=\frac{n_1\hat{p_1}+n_2\hat{p_2}}{n1+n2}=\frac{74\cdot0.39+115\cdot0.61}{189}=0.52\)</span>
+With α = 0.01, compute the test statistic: <span class="math inline">\(z=\frac{\hat{p_1}-\hat{p_2}}{\sqrt{\hat{p}(1-\hat{p})(\frac{1}{n_1}+\frac{1}{n_2})}}=\frac{0.39-0.61}{\sqrt{0.52(1-0.52)(\frac{1}{74}+\frac{1}{115})}}=-2.95\)</span><br />
+Critical value: <span class="math inline">\(z_{1-\alpha/2}=z_{0.995}\)</span>=2.5758293<br />
+Reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|z|&gt;z_{1-\alpha/2}\)</span><br />
+Fail to reject <span class="math inline">\(H_0\)</span>: if <span class="math inline">\(|z|\leq z_{1-\alpha/2}\)</span><br />
+Cause <span class="math inline">\(|z_{stat}|=2.95&gt;2.58\)</span>, we
+would reject the null hypothesis at the α=0.1 level, meaning we have
+evidence that the proportion of women with uterine irritability is
+different between smoking group and non-smoking group.<br />
+</p>
+<pre class="r"><code>#or we can use R code.
+prop.test(c(birth_data|&gt;group_by(ui,smoke)|&gt;summarise(count=n())|&gt;filter(smoke==1, ui==1)|&gt;pull(), birth_data|&gt;group_by(ui,smoke)|&gt;summarise(count=n())|&gt;filter(smoke==0, ui==1)|&gt;pull()), c(nrow(ui_smo),nrow(ui_nsm)), alternative = &quot;two.sided&quot;, conf.level = 0.9)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;ui&#39;. You can override using the `.groups`
+## argument.
+## `summarise()` has grouped output by &#39;ui&#39;. You can override using the `.groups`
+## argument.</code></pre>
+<pre><code>## 
+##  2-sample test for equality of proportions with continuity correction
+## 
+## data:  c(pull(filter(summarise(group_by(birth_data, ui, smoke), count = n()), smoke == 1, ui == 1)), pull(filter(summarise(group_by(birth_data, ui, smoke), count = n()), smoke == 0, ui == 1))) out of c(nrow(ui_smo), nrow(ui_nsm))
+## X-squared = 0.41576, df = 1, p-value = 0.5191
+## alternative hypothesis: two.sided
+## 90 percent confidence interval:
+##  -0.05509934  0.14558112
+## sample estimates:
+##    prop 1    prop 2 
+## 0.1756757 0.1304348</code></pre>
+<pre class="r"><code>#p-value&gt;0.05, fail to reject H0.</code></pre>
+</div>
+<div id="problem-5" class="section level2">
+<h2>Problem 5</h2>
+<pre class="r"><code>bwt_r1 =
+  birth_data |&gt;
+  filter(race == 1) |&gt;
+  dplyr::select(bwt)
+
+bwt_r2 =
+  birth_data |&gt;
+  filter(race == 2) |&gt;
+  dplyr::select(bwt)
+
+bwt_r3 =
+  birth_data |&gt;
+  filter(race == 3) |&gt;
+  dplyr::select(bwt)</code></pre>
+<p><strong>(a)</strong><br />
+ANOVA: test for any differences in mean response among different levels
+of a factor.<br />
+</p>
+<p><strong>(b)</strong> Assumption:<br />
+- There are k population of interest (k≥2). There are 3 races
+here.<br />
+- The samples are drawn independently from the underlying populations.
+Samples are picked independently.<br />
+- Homoscedasticity: the variance of the k populations are equal, which
+means variance of the outcome does not depend on the sample. Samples in
+different groups share the same variance (p-value&gt;0.05).<br />
+</p>
+<pre class="r"><code>bartlett.test(birth_data$bwt, birth_data$race)</code></pre>
+<pre><code>## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  birth_data$bwt and birth_data$race
+## Bartlett&#39;s K-squared = 0.65952, df = 2, p-value = 0.7191</code></pre>
+<ul>
+<li>Normality: the distribution of the error terms are normal. Cause
+n=189, the sampling distribution would be normal.<br />
+</li>
+</ul>
+<p><strong>(c)</strong><br />
+</p>
+<p>Testing the hypotheses: <span class="math inline">\(H_0:\mu_1=\mu_2=\mu_3,\ H_1:at\ least\ two\ means\
+are\ not\ equal\)</span><br />
+</p>
+<pre class="r"><code>aov(bwt ~ race, data = birth_data) |&gt;
+  summary()</code></pre>
+<pre><code>##              Df   Sum Sq Mean Sq F value  Pr(&gt;F)   
+## race          1  3790184 3790184   7.369 0.00726 **
+## Residuals   187 96179472  514329                   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Cause p-value=0.007&lt;0.05, we would reject the null hypothesis at
+the α=0.05 level, meaning we have evidence that at least two races have
+different mean birth weight.<br />
+</p>
+<p><strong>(d)</strong><br />
+</p>
+<pre class="r"><code>pairwise.t.test(birth_data$bwt, birth_data$race, 
+                p.adjust.method = &quot;bonf&quot;, paired = FALSE, alternative = &quot;two.sided&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  birth_data$bwt and birth_data$race 
+## 
+##   1     2    
+## 2 0.049 -    
+## 3 0.029 1.000
+## 
+## P value adjustment method: bonferroni</code></pre>
+<p>The adjusted p-value between group 1 and 2, group 1 and 3 are less
+than 0.05, which means the mean birth weight of group 1 is different
+from group 2 and 3 with significance level α=0.05.<br />
+However, the adjusted p-value between group 2 and 3 are greater than
+0.05, which means under significance level α=0.05 there is no evidence
+showing that there is a difference in mean birth weight between the two
+groups.<br />
+</p>
 </div>
 
 

@@ -1,0 +1,206 @@
+---
+title: "p8130_hw3_yl5508"
+author: "Yifei LIU (yl5508)"
+date: 2023/10/27
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setting, message = FALSE}
+library(tidyverse)
+library(MASS)
+data("birthwt")
+birth_data = as_tibble(birthwt)
+```
+
+## Problem 1
+
+**(a)** 
+```{r weight}
+#one-sample t-test, unknown variance
+t_lower = qt(0.025,188)
+t_upper = qt(0.975,188)
+print(paste("(", mean(birth_data$lwt)+t_lower*sd(birth_data$lwt)/sqrt(nrow(birth_data)), ",",
+            mean(birth_data$lwt)+t_upper*sd(birth_data$lwt)/sqrt(nrow(birth_data)), ")"))
+```
+Treat data `lwt` from `birthwt` dataset as a sample:\
+- Sample size: `r nrow(birth_data)`\
+- Sample mean: `r mean(birth_data$lwt) #or use birth_data |> pull(lwt) |> mean()`\
+- Sample sd: `r sd(birth_data$lwt)`\
+For true σ from population is unknown, we need to calculate the estimated standard error: $\frac{s}{\sqrt{n}}=\frac{30.6}{\sqrt{189}}=2.2$.\
+For two-sided test, $t_{n-1,1-\alpha/2}=1.97$.\
+So, the confidence interval(CI) for the population mean weight of American women is $125.4<\mu<134.2$.\
+
+**(b)** We are 95% confident that the true population mean lies between the lower (125.4) and the upper (134.2) limits of the interval.\
+OR: Over the collection of all 95% confidence intervals that could be constructed from repeated samples of size n (`r nrow(birth_data)`), 95% of them will contain the true population mean.\
+
+**(c)** Because the population mean(171) doesn't lie in the confidential interval(125.4<μ<134.2), we can say that the medical claim about average weight of American women is not true (probability of which is less than 5%), or the sample we have cannot correctly reflect the character of population.\
+
+## Problem 2
+
+**(a)** 
+
+```{r smoking}
+lwt_smo =
+  birth_data |>
+  filter(smoke == 1) |>
+  dplyr::select(lwt)
+
+lwt_nsm =
+  birth_data |>
+  filter(smoke == 0) |>
+  dplyr::select(lwt)
+```
+
+- Sample size: `r nrow(lwt_smo)`(smoking group) and `r nrow(lwt_nsm)`(non-smoking group)\
+- Sample mean: `r mean(lwt_smo$lwt)`(smoking group) and `r mean(lwt_nsm$lwt)`(non-smoking group)\
+- Sample sd: `r sd(lwt_smo$lwt)`(smoking group) and `r sd(lwt_nsm$lwt)`(non-smoking group)\
+
+Test for equality of variances.\
+Testing the hypotheses: $H_0:\sigma^{2}_{1}=\sigma^{2}_{2},\ H_1:\sigma^{2}_{1}\neq\sigma^{2}_{2}$\
+With α = 0.05, compute the test statistic: $F=\frac{s^{2}_{1}}{s^{2}_{2}}=\frac{{33.8}^{2}}{{28.4}^{2}}=1.4$\
+Critical value: $F_{73,114,0.975}$=`r qf(0.975, 73, 114)`, $F_{73,114,0.025}$=`r qf(0.025, 73, 114)`\
+Reject $H_0$: if $F_{stat}<F_{n_1-1,\ n_2-1,\ 1-\alpha/2}$ or $F_{stat}>F_{n_1-1,\ n_2-1,\ \alpha/2}$\
+Fail to reject $H_0$: if $F_{n_1-1,\ n_2-1,\ \alpha/2}\leq F_{stat}\leq F_{n_1-1,\ n_2-1,\ 1-\alpha/2}$\
+Cause $0.7<F_{stat}<1.5$, we fail to reject the null hypothesis, meaning we do not have evidence that the variances are unequal between smoking group and non-smoking group.\
+
+```{r}
+#or we can use R code.
+var.test(lwt ~ smoke, data = birth_data, alternative = "two.sided", conf.level = 0.95)
+#p-value>0.05, fail to reject H0.
+```
+
+**(b)** Given that we fail to consider the variances as equal, we shall use 2 independt samples t-test for unknown population variance with equal sample variances.\
+
+**(c)**\
+Testing the hypotheses: $H_0:\mu_{1}=\mu_{2},\ H_1:\mu_{1}\neq\mu_{2}$\
+Compute: $s^2=\frac{(n_1-1)s^2_1+(n_2-1)s^2_2}{n_1+n_2-2}=\frac{73\cdot{33.8}^2+114\cdot{28.4}^2}{74+115-2}=938.3$
+With α = 0.1, compute the test statistic: $t=\frac{\overline{X_1}-\overline{X_2}}{s\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}}=\frac{128.1-130.9}{\sqrt{938.3}\cdot\sqrt{\frac{1}{74}+\frac{1}{115}}}=-0.6$\
+Critical value: $t_{n_1+n_2-2,1-\alpha/2}=t_{187,0.95}$=`r qt(0.95,187)`\
+Reject $H_0$: if $|t|>t_{n_1+n_2-2,1-\alpha/2}$\
+Fail to reject $H_0$: if $|t|\leq t_{n_1+n_2-2,1-\alpha/2}$\
+Cause $|t_{stat}|=0.6<1.7$, we fail to reject the null hypothesis, meaning we do not have evidence that the mean number is different between smoking group and non-smoking group.\
+
+```{r}
+#or we can use R code.
+t.test(lwt ~ smoke, data = birth_data, alternative = "two.sided", conf.level = 0.9, var.equal = TRUE)
+#p-value>0.05, fail to reject H0.
+```
+
+## Problem 3
+
+**(a)** 
+
+```{r hypertension}
+lwt_hyp =
+  birth_data |>
+  filter(ht == 1) |>
+  dplyr::select(lwt)
+
+lwt_nhy =
+  birth_data |>
+  filter(ht == 0) |>
+  dplyr::select(lwt)
+```
+
+- Sample size: `r nrow(lwt_hyp)`(hypertension group) and `r nrow(lwt_nhy)`(non-hypertension group)\
+- Sample mean: `r mean(lwt_hyp$lwt)`(hypertension group) and `r mean(lwt_nhy$lwt)`(non-hypertension group)\
+- Sample sd: `r sd(lwt_hyp$lwt)`(hypertension group) and `r sd(lwt_nhy$lwt)`(non-hypertension group)\
+
+From data shown above, $\hat{p}=\frac{12}{189}=0.06$\
+A 99% confidence interval for one population proportion is given by: $(\hat{p}-z_{1-\alpha/2}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}},\hat{p}+z_{1-\alpha/2}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}})$, i.e. $(0.06-z_{0.995}\sqrt{\frac{0.06(1-0.06)}{189}},0.06+z_{0.995}\sqrt{\frac{0.06(1-0.06)}{189}})$=(`r round(12/189-qnorm(0.995,0,1)*sqrt(12/189*(1-12/189)/189),3)`,`r round(12/189+qnorm(0.995,0,1)*sqrt(12/189*(1-12/189)/189),3)`)\
+Interpretation: We are 99% confident that the true population proportion lies between the lower (0.018) and the upper (0.109) limits of the interval. The given 20% proportion is out of such interval, so we shall reject the hypothesis at the α=0.1 level that CDC's claim is not true.\
+
+```{r}
+#or use R code.
+prop.test(nrow(lwt_hyp),nrow(birth_data),p = 0.2, alternative = "two.sided", conf.level = 0.99)
+```
+
+**(b)**\
+Testing the hypotheses: $H_0:p = p_0,\ H_1:p<p_0$\
+With α = 0.1, compute the test statistic: $z=\frac{\hat{p}-p_0}{\sqrt{p_0(1-p_0)/n}}=\frac{0.06-0.20}{\sqrt{0.2(1-0.2)/189}}=-4.8$\
+Critical value: $z_{\alpha}=z_{0.1}$=`r qnorm(0.1,0,1)`\
+Reject $H_0$: if $z<z_{\alpha}$\
+Fail to reject $H_0$: if $z\geq z_{\alpha}$\
+Cause $z_{stat}=-4.8<-1.3$, we would reject the null hypothesis at the α=0.1 level, meaning we have evidence that the true proportion is less than what CDC claims is.\
+
+```{r}
+#or use R code.
+prop.test(nrow(lwt_hyp),nrow(birth_data),p = 0.2, alternative = "less", conf.level = 0.9)
+#p-value<0.1, reject H0.
+```
+
+## Problem 4
+
+```{r ui_smoking}
+ui_smo =
+  birth_data |>
+  filter(smoke == 1) |>
+  dplyr::select(ui)
+
+ui_nsm =
+  birth_data |>
+  filter(smoke == 0) |>
+  dplyr::select(ui)
+```
+
+- Sample size: `r nrow(ui_smo)`(smoking group) and `r nrow(ui_nsm)`(non-smoking group)\
+- Sample proportion: `r nrow(ui_smo)/nrow(birth_data)`(smoking group) and `r nrow(ui_nsm)/nrow(birth_data)`(non-smoking group)\
+
+Testing the hypotheses: $H_0:p_1=p_2,\ H_1:p_1\neq p_2$\
+$\hat{p}=\frac{n_1\hat{p_1}+n_2\hat{p_2}}{n1+n2}=\frac{74\cdot0.39+115\cdot0.61}{189}=0.52$
+With α = 0.01, compute the test statistic: $z=\frac{\hat{p_1}-\hat{p_2}}{\sqrt{\hat{p}(1-\hat{p})(\frac{1}{n_1}+\frac{1}{n_2})}}=\frac{0.39-0.61}{\sqrt{0.52(1-0.52)(\frac{1}{74}+\frac{1}{115})}}=-2.95$\
+Critical value: $z_{1-\alpha/2}=z_{0.995}$=`r qnorm(0.995,0,1)`\
+Reject $H_0$: if $|z|>z_{1-\alpha/2}$\
+Fail to reject $H_0$: if $|z|\leq z_{1-\alpha/2}$\
+Cause $|z_{stat}|=2.95>2.58$, we would reject the null hypothesis at the α=0.1 level, meaning we have evidence that the proportion of women with uterine irritability is different between smoking group and non-smoking group.\
+
+```{r}
+#or we can use R code.
+prop.test(c(birth_data|>group_by(ui,smoke)|>summarise(count=n())|>filter(smoke==1, ui==1)|>pull(), birth_data|>group_by(ui,smoke)|>summarise(count=n())|>filter(smoke==0, ui==1)|>pull()), c(nrow(ui_smo),nrow(ui_nsm)), alternative = "two.sided", conf.level = 0.9)
+#p-value>0.05, fail to reject H0.
+```
+
+## Problem 5
+
+**(a)**\
+ANOVA: test for any differences in mean response among different levels of a factor.\
+
+**(b)**\
+
+```{r}
+bartlett.test(birth_data$bwt, birth_data$race)
+```
+
+Assumption:\
+- There are k population of interest (k≥2). There are 3 races here.\
+- The samples are drawn independently from the underlying populations. Samples are picked independently.\
+- Homoscedasticity: the variance of the k populations are equal, which means variance of the outcome does not depend on the sample. Samples in different groups share the same variance (p-value>0.05).\
+- Normality: the distribution of the error terms are normal. Cause n=189, the sampling distribution would be normal.\
+
+**(c)**\
+
+Testing the hypotheses: $H_0:\mu_1=\mu_2=\mu_3,\ H_1:at\ least\ two\ means\ are\ not\ equal$\
+
+```{r}
+aov(bwt ~ race, data = birth_data) |>
+  summary()
+```
+
+Cause p-value=0.007<0.05, we would reject the null hypothesis at the α=0.05 level, meaning we have evidence that at least two races have different mean birth weight.\
+
+**(d)**\
+
+```{r}
+pairwise.t.test(birth_data$bwt, birth_data$race, 
+                p.adjust.method = "bonf", paired = FALSE, alternative = "two.sided")
+```
+
+The adjusted p-value between group 1 and 2, group 1 and 3 are less than 0.05, which means the mean birth weight of group 1 is different from group 2 and 3 with significance level α=0.05.\
+However, the adjusted p-value between group 2 and 3 are greater than 0.05, which means under significance level α=0.05 there is no evidence showing that there is a difference in mean birth weight between the two groups.\
+
+
+
+
+
