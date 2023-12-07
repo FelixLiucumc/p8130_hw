@@ -1,0 +1,110 @@
+---
+title: "p8130_hw5_yl5508"
+author: "Yifei LIU (yl5508)"
+date: 2023/12/7
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setting, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(faraway)
+```
+
+## Problem 1
+
+**(a)** 
+
+```{r}
+#load data set
+sta_data = as.data.frame(state.x77)
+sta_data |> 
+  summary() |> 
+  knitr::kable(digits = 1)
+```
+
+Continuous variables includes `Population`, `Income`, `Illiteracy`, `Life Exp`, `Murder`, `HS Grad`, `Frost`, `Area`.\
+
+No variable listed in the data set is categorical.\
+
+**(b)** 
+
+```{r}
+#histogram of variables
+par(mfrow = c(2, 4), mar = c(8, 4, 2, 1))
+
+for (i in 1:8) {
+  sta_data[,i] |>
+  hist(main = colnames(sta_data[i]), xlab = colnames(sta_data[i]), freq = T, col = 2)
+}
+```
+
+From the histograms, we notice that `Population`, `Illiteracy`, `Area` need to be transformed in order to get a normal distribution.\
+
+```{r}
+#log transformation
+sta_transformed = 
+  sta_data |>
+  mutate(
+    Population_t = log(Population),
+    Illiteracy_t = log(Illiteracy),
+    Area_t = log(Area)) |>
+  select(Population, Population_t, Illiteracy, Illiteracy_t, Area, Area_t)
+
+sta_tidy =
+  sta_data |>
+  mutate(
+    Population_t = log(Population),
+    Illiteracy_t = log(Illiteracy),
+    Area_t = log(Area)) |>
+  select(-Population, -Illiteracy, -Area)
+
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 2))
+
+for (i in seq(1, 5, 2)) {
+  #untransformed variables
+  sta_transformed[,i] |>
+    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i])), xlab = colnames(sta_transformed[i]), freq = T, col = 2)
+  
+  #log transformed variables
+  sta_transformed[,i+1] |>
+    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i+1])), xlab = colnames(sta_transformed[i+1]), freq = T, col = 2)
+  
+  #Q-Q plot
+  qqnorm(sta_transformed[,i+1], col = 2, pch = 19, cex = 0.5)
+  qqline(sta_transformed[,i+1], col = 1, lwd = 2, lty = 2)
+}
+```
+
+**(c)** 
+
+```{r}
+#global variables
+lm(`Life Exp` ~ ., data = sta_tidy) |>
+  summary()
+
+#forward stepwise
+model_fw = lm(`Life Exp` ~ ., data = sta_tidy) |>
+  step(direction = "forward")
+model_fw |> summary()
+model_fw |> anova()
+
+#backward stepwise
+model_bk = lm(`Life Exp` ~ ., data = sta_tidy) |>
+  step(direction = "backward")
+model_bk |> summary()
+model_bk |> anova()
+
+#both
+model_bth = lm(`Life Exp` ~ ., data = sta_tidy) |>
+  step(direction = "both")
+model_bth |> summary()
+model_bth |> anova()
+```
+
+
+
+
+
+
