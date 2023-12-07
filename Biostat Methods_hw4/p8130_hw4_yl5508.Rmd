@@ -1,0 +1,337 @@
+---
+title: "p8130_hw4_yl5508"
+author: "Yifei LIU (yl5508)"
+date: 2023/11/15
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setting, message = FALSE}
+library(tidyverse)
+library(readxl)
+library(BSDA)
+```
+
+## Problem 1
+
+**(a)** 
+
+```{r}
+bsl = c(125, 123, 117, 123, 115, 112, 128, 118, 124, 111, 116, 109, 125, 120, 113, 123, 112, 118, 121, 118, 122, 115, 105, 118, 131)
+#bsl_data = tibble(bsl_value = bsl)
+
+#check normality
+#hist
+bsl |>
+  hist(xlab = "Blood Sugar Level", freq = T, col = 2)
+#bsl_data |>
+  #ggplot(aes(x = bsl_value)) +
+  #geom_histogram(bins = 8, fill = "lightblue", color = "Black")
+
+#Q-Q plot
+qqnorm(bsl, col = 2, pch = 19, cex = 0.5)
+qqline(bsl, col = 1, lwd = 2, lty = 2)
+#directly added to existed plot
+
+#Shapiro-Wilk test
+res = shapiro.test(bsl)
+norm_test = tibble(
+  p_value = res$p.value,
+  statistic = res$statistic
+)
+norm_test |>
+  knitr::kable(digits = 5)
+```
+
+```{r}
+#sign test
+res = SIGN.test(bsl, md = 120, alternative = "less", conf.level = 0.95)
+mbs_sign_tidy = tibble(
+  p_value = res$p.value,
+  statistic = res$statistic
+)
+mbs_sign_tidy |>
+  knitr::kable(digits = 5)
+```
+
+Interpretation: Since p-value = 0.27 > 0.05 (sign test), we would fail to reject the null hypothesis at the α=0.05 level, meaning we have no evidence that median blood sugar readings was less than 120 in the population.\
+
+**(b)** 
+
+Normal-Approximation: n* = 25-1 ≥ 16
+
+$H_0:\ median(bsl) - 120 = 0$
+vs
+$H_1:\ median(bsl) - 120 < 0$
+
+```{r}
+#Wilcoxon signed-rank test
+wil_test = tibble(
+  diff_abs = abs(bsl - 120),
+  diff = bsl - 120
+) |>
+  mutate(
+    pos_d = ifelse(diff>0, 1, 0),
+    neg_d = ifelse(diff<0, 1, 0)
+  ) |>
+  arrange(- diff_abs) |>
+  select(- diff) |>
+  mutate(rank = ifelse(diff_abs > 0, rank(diff_abs[diff_abs > 0]), 0))
+
+head(wil_test, 5)
+```
+
+```{r}
+#T+
+T_sum = wil_test |>
+  group_by(pos_d) |>
+  summarise(sum_rank = sum(rank))
+
+#T stat
+T_pos = T_sum |> filter(pos_d == 1) |> pull(sum_rank)
+T_stat = (abs(112.5 - 24*(24+1)/4)-1/2)/(sqrt(24*(24+1)*(24*2+1)/24-((2^3-2)*2+(4^3-4)*2)/48))
+T_stat
+```
+
+```{r}
+#test statistic
+z_5 = qnorm(0.05)
+z_5
+#p_value
+1 - pnorm(T_stat)
+```
+
+Comment: Using a α = 0.05 significance level, T_stat = 1.06 ≥ Z_0.05 = -1.64 (or: p-value = 0.14 > 0.05), we would fail to reject H0 and conclude that there is no evidence that median blood sugar readings was less than 120 in the population.\
+
+```{r}
+#Wilcoxon signed-rank test using R code
+res = wilcox.test(bsl, mu = 120, alternative = "less", conf.level = 0.95)
+mbs_wil_tidy = tibble(
+  p_value = res$p.value,
+  statistic = res$statistic
+)
+mbs_wil_tidy |>
+  knitr::kable(digits = 5)
+```
+
+Interpretation: Since p-value = 0.14 > 0.05 (Wilcoxon signed-rank test), we would fail to reject the null hypothesis at the α=0.05 level, meaning we have no evidence that median blood sugar readings was less than 120 in the population.\
+
+## Problem 2
+
+**(a)** 
+
+```{r}
+#loading nonhuman data
+brain_data =
+  read_excel("~/Biostat methods/p8130_Biostat Methods_hw/data/Brain.xlsx") |>
+  janitor::clean_names()
+
+brain_nonhuman =
+  brain_data |>
+  filter(species != "Homo sapiens") |>
+  mutate(brain_mass_g = as.numeric(brain_mass_g))
+```
+
+
+```{r}
+#generating a regression model
+model_nh <- lm(data = brain_nonhuman, glia_neuron_ratio ~ ln_brain_mass)
+summary(model_nh)
+
+#plot with regression model
+plot(brain_nonhuman$ln_brain_mass,
+     brain_nonhuman$glia_neuron_ratio,
+     main = "linear regression for nonhumans",
+     xlab = "ln brain mass", ylab = "glia-neuron ratio")
+abline(model_nh, lwd = 2, col = 2)
+```
+
+**(b)** 
+
+```{r}
+predict_human =
+  brain_data |>
+  slice(1) |>
+  select(ln_brain_mass)
+
+predict_human |>
+  mutate(predict_ratio = predict.lm(model_nh, predict_human)) |>
+  knitr::kable(digits = 5)
+```
+
+Comment: Given humans brain mass, the predicted glia-neuron ratio for humans is 1.47 according to the generated linear regression.\
+
+**(c)** 
+
+The first interval is confidence interval. It would be suitable for estimating the mean response for the overall population.\
+The second interval is prediction interval. It would be suitable when we predict the result of one specific individual.\
+So, for this case, confidence interval would be reasonable.\
+
+**(d)** 
+
+```{r}
+#confidence interval
+predict_human |>
+  bind_cols(predict.lm(model_nh, predict_human, interval = "predict", conf.level = 0.95)) |>
+  rename(predict_ratio = fit, lower_bound = lwr, upper_bound = upr) |>
+  knitr::kable(digits = 5)
+```
+
+Comment: 95% confidence interval of human glia-neuron is (1.03, 1.91). The predicted value is 1.47. Humans have a higher glia-neuron ratio that nonhumans, so it would be deemed as an outlier from the regression model (prediction interval doesn't contain value of nonhumans).\
+
+**(e)** 
+
+Comment: The data point of humans is actually a outlier for those of nonhumans. It would interfere the generation of the correct regression model for nonhumans.\
+
+## Problem 3
+
+**(a)** 
+
+```{r}
+#loading heart disease data
+hd_data =
+  read_csv("~/Biostat methods/p8130_Biostat Methods_hw/data/HeartDisease.csv") |>
+  janitor::clean_names() |>
+  select(totalcost, e_rvisits, age, gender, complications, duration)
+
+hd_data |>
+  summary() |>
+  knitr::kable(digits = 1)
+```
+
+Comment:\
+(a) The main outcome of the data set is `totalcost` (continuous variable).\
+(b) The main predictor is `e_rvisits` (continuous variable).\
+(c) Important covariates are `age` (categorical variable), `gender` (categorical variable), `complications` (categorical variable), `duration` (continuous variable).\
+
+**(b)** 
+
+```{r}
+#check normality
+#hist
+hd_data |>
+  pull(totalcost) |>
+  hist(xlab = "Total Cost", freq = T, col = 2)
+
+#try box-cox transformation
+model_hd = lm(totalcost ~ e_rvisits, data = hd_data |> filter(totalcost != 0))
+MASS::boxcox(model_hd)
+
+par(mfrow = c(2, 2))
+plot(model_hd)
+
+#try log transformation
+model_hd_log = lm(log(totalcost + 1) ~ e_rvisits, data = hd_data)
+
+par(mfrow = c(2, 2))
+plot(model_hd_log)
+```
+
+
+```{r}
+#transformed hist
+hd_data |>
+  mutate(totalcost_1 = totalcost + 1) |>
+  pull(totalcost_1) |>
+  log() |>
+  hist(xlab = "Total Cost", freq = T, col = 2)
+
+#Q-Q plot
+#untransformed
+qqnorm(hd_data |> pull(totalcost), col = 2, pch = 19, cex = 0.5)
+qqline(hd_data |> pull(totalcost), col = 1, lwd = 2, lty = 2)
+
+#log transformed
+qqnorm(hd_data |> mutate(totalcost_1 = totalcost + 1) |> pull(totalcost_1) |> log(), col = 2, pch = 19, cex = 0.5)
+qqline(hd_data |> mutate(totalcost_1 = totalcost + 1) |> pull(totalcost_1) |> log(), col = 1, lwd = 2, lty = 2)
+```
+
+Comment: Use log(x+1) function to transform the variable `totalcost` and turn it into a nice bell-shape distribution.\
+
+**(c)** 
+
+```{r}
+hd_data_tidy =
+  hd_data |>
+  mutate(comp_bin = ifelse(complications == 0, 0, 1))
+hd_data_tidy |> head(5)
+```
+
+**(d)** 
+
+```{r}
+model_hd_log = lm(log(totalcost + 1) ~ e_rvisits, data = hd_data_tidy)
+
+plot(log(totalcost + 1) ~ e_rvisits, data = hd_data,
+     main = "transformed total cost vs er visit",
+     xlab = "er visit", ylab = "transformed total cost")
+
+abline(model_hd_log, lwd = 2, col = 2)
+
+summary(model_hd_log)
+```
+
+Comment: For adding 1 unit to emergency room visit, the log of (total cost plus one) would increase by 0.23 unit. The p_value is less than 0.05, so er visit has a significant effect on the log of (total cost plus one).\
+
+**(e)** 
+
+*(i)*
+
+```{r}
+regmulti_hd = lm(log(totalcost + 1) ~ e_rvisits + comp_bin, data = hd_data_tidy)
+summary(regmulti_hd)
+```
+
+Comment: There are significant effects of variables `er_visit` and `comp_bin` on `log(totalcost + 1)`, since p_value is less than 0.05.\
+
+*(ii)*
+
+```{r}
+anova(regmulti_hd)
+
+regmulti_hd_interact = lm(log(totalcost + 1) ~ e_rvisits * comp_bin, data = hd_data_tidy)
+summary(regmulti_hd_interact)
+
+hd_data_tidy |>
+  ggplot(aes(x = e_rvisits, y = log(totalcost + 1), color = factor(comp_bin))) +
+  geom_point() +
+  geom_smooth(method="lm", se=F, aes(group = comp_bin, color = factor(comp_bin))) +
+  labs(title = "transformed total cost vs er visit, by complications",
+    x = "er visit",
+    y = "transformed total cost") +
+  viridis::scale_color_viridis(name = "complications", discrete = TRUE, option = "viridis") +
+  theme_bw()
+```
+
+Comment:\
+(a) We can start an anova test on the model, and we notice that both variables have a significant effects on total cost.\
+(b) Then, I use formula of `log(totalcost + 1) ~ e_rvisits * comp_bin` to take interaction effect into account. And I find that there is no evidence showing that interaction effect would exist in their relationship.\
+(c) Lastly, I draw two lines colored by complication situation. Since two lines are not parallel, I can reach the conclusion that complications would not be a confounder in this case.\
+
+*(iii)*
+
+Comment: Since `comp_bin` is not a confounder (nor has a interaction effect with `er_visit`) in the model and it shows a significant effect on `total_cost`, it should be contained in the model and it will not affect the effect that `er_visit` has over `total_cost`.\
+
+**(f)** 
+
+*(i)*
+
+```{r}
+regmulti_hd_5 = lm(log(totalcost + 1) ~ e_rvisits + comp_bin + age + gender + duration, data = hd_data_tidy)
+summary(regmulti_hd_5)
+```
+
+Comment: `age` is statistically significant at α = 0.05 significant level (p_value < 0.05) and `duration` is statistically significant
+at any regular significant level (p_value < 0.001). We shall include `duration` when generate a linear model.\
+Given other conditions unchanged, a unit increase in `duration` would lead to a 0.0057 unit increase in log(total cost + 1).\
+
+*(ii)*
+
+```{r}
+regmulti_hd_test = lm(log(totalcost + 1) ~ e_rvisits + comp_bin + duration, data = hd_data_tidy)
+summary(regmulti_hd_test)
+```
+
+Comment: Given the adjusted r squared shown in both model analysis, MLR model (0.2594) would be more appropriate than SLR model (0.0973).\
+
