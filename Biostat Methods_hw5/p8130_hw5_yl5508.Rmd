@@ -10,6 +10,9 @@ output:
 ```{r setting, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(faraway)
+library(glmnet)
+
+set.seed(1)
 ```
 
 ## Problem 1
@@ -58,7 +61,8 @@ sta_tidy =
     Population_t = log(Population),
     Illiteracy_t = log(Illiteracy),
     Area_t = log(Area)) |>
-  select(-Population, -Illiteracy, -Area)
+  select(-Population, -Illiteracy, -Area) |>
+  select(`Life Exp`, everything())
 
 par(mfrow = c(3, 3), mar = c(4, 4, 2, 2))
 
@@ -88,19 +92,140 @@ lm(`Life Exp` ~ ., data = sta_tidy) |>
 model_fw = lm(`Life Exp` ~ ., data = sta_tidy) |>
   step(direction = "forward")
 model_fw |> summary()
-model_fw |> anova()
 
 #backward stepwise
 model_bk = lm(`Life Exp` ~ ., data = sta_tidy) |>
   step(direction = "backward")
 model_bk |> summary()
-model_bk |> anova()
 
 #both
 model_bth = lm(`Life Exp` ~ ., data = sta_tidy) |>
   step(direction = "both")
 model_bth |> summary()
-model_bth |> anova()
+```
+
+Based on AIC, the function reduces the set of potential predictors. The model with the smallest value would be deemed as appropriate.  
+
+Actually the model shown after variables selection would not be the final result. We need to trim some variables off based on the p-value listed in the tables.  
+
+For forward selection, the model shows that only variables `Murder` and `HS Grad` is significantly effective (p < 0.05).  
+
+For backward selection, `Murder`, `HS Grad`, `Frost`, `Population_t` are significant variables.  
+
+For method concerning both forward and backward selection, the result is the same as backward selection.  
+
+So, I would pick `Murder`, `HS Grad`, `Frost`, `Population_t` as my predictors.  
+
+```{r}
+corrplot::corrplot(cor(sta_tidy), type = "upper")
+```
+
+We notice that there is a strong negative correlation between `Illiteracy` and `HS Grad` (approximately 0.8). My variables subset doesn't include both, for the variables selection process can partly deal with multicollinearity issue.  
+
+**(d)** 
+
+```{r}
+library(leaps)
+
+mat = as.matrix(sta_tidy)
+leaps(x = mat[, 2:8], y = mat[, 1], method = "adjr2", nbest = 2)
+
+model_cri = regsubsets(`Life Exp` ~ ., data = sta_tidy)
+res =
+  model_cri |>
+  summary()
+
+par(mfrow = c(1, 3), mar = c(8, 4, 4, 1))
+plot(1:7, res$adjr2, xlab = "# of parameters", ylab = "adj r2")
+plot(1:7, res$cp, xlab = "# of parameters", ylab = "Cp")
+plot(1:7, res$bic, xlab = "# of parameters", ylab = "BIC")
+
+res$outmat[4,]
+```
+
+From the criterion-based procedures, using `adjusted r squared`/`Cp criterion`/`BIC`, we conclude that the best model contain 4 parameters and the parameters are `Murder`, `HS Grad`, `Frost`, `Population_t`.
+
+**(e)** 
+
+```{r}
+#explore possible lambda
+fit1 = glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = 1)
+coef(fit1)
+
+fit2 = glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = 0.1)
+coef(fit2)
+
+fit3 = glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = 0.01)
+coef(fit3)
+```
+
+We would consider setting the range of lambda at the interval of (0.01, 0.1).  
+
+```{r}
+#grid search
+lambda_seq = 10^seq(-2, 1, by = 0.1)
+```
+
+
+```{r}
+cv_res =
+  cv.glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, 
+            lambda = lambda_seq, nfolds = 5)
+
+opt_lambda = cv_res$lambda.min
+
+#variables contraction
+glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = lambda_seq) |>
+  broom::tidy() |>
+  select(term, lambda, estimate) |> 
+  complete(term, lambda, fill = list(estimate = 0) ) |> 
+  filter(term != "(Intercept)") |> 
+  ggplot(aes(x = log(lambda, 10), y = estimate, group = term, color = term)) + 
+  geom_path(size = 0.8) + 
+  geom_vline(xintercept = log(opt_lambda, 10), color = "red", linetype = "dashed", size = 1) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+tb_res = tibble(
+  lambda = cv_res$lambda,
+  mean_cv_error = cv_res$cvm) |>
+  filter(lambda < 0.1)
+
+#choosing optimal lambda
+tb_res |>
+  ggplot(aes(x = lambda, y = mean_cv_error)) +
+  geom_point() +
+  theme_bw()
+```
+
+The optimal lambda we have chosen is `r round(opt_lambda, 2)`. And the variables we determine are `Murder`, `HS Grad`, `Frost`, `Population_t`.  
+
+**(f)** 
+
+```{r}
+#stepwise
+fit_bth = lm(`Life Exp` ~ ., data = sta_tidy) |>
+  step(direction = "both")
+
+#lasso
+fit_lasso = glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = 0.04)
+
+r2_bth = summary(fit_bth)$adj.r.squared
+r2_lasso = 1 - cv_res$cvm / var(sta_tidy$`Life Exp`)
+```
+
+
+```{r}
+library(caret)
+
+#cross validation
+train = trainControl(method = "cv", number = 5)
+
+model_cv = train(`Life Exp` ~ Murder + `HS Grad` + Frost + Population_t, data = sta_tidy, method = 'lm', na.action = na.pass)
+
+model_cv$finalModel
+
+print(model_cv)
 ```
 
 
