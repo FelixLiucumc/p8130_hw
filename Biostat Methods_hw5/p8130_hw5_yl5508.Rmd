@@ -11,8 +11,9 @@ output:
 library(tidyverse)
 library(faraway)
 library(glmnet)
+library(caret)
 
-set.seed(1)
+set.seed(123)
 ```
 
 ## Problem 1
@@ -207,28 +208,67 @@ The optimal lambda we have chosen is `r round(opt_lambda, 2)`. And the variables
 fit_bth = lm(`Life Exp` ~ ., data = sta_tidy) |>
   step(direction = "both")
 
-#lasso
-fit_lasso = glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, lambda = 0.04)
-
-r2_bth = summary(fit_bth)$adj.r.squared
-r2_lasso = 1 - cv_res$cvm / var(sta_tidy$`Life Exp`)
+summary(fit_bth)$adj.r.squared
 ```
 
+From above exploring, we find that all models or criteria suggest a variables combination of `Murder`, `HS Grad`, `Frost`, `Population_t`. So, I recommend final model to be a multiple linear model of `Life Exp` ~ `Murder` + `HS Grad` + `Frost` + `Population_t` (r squared = `r round(summary(fit_bth)$adj.r.squared, 2)`).  
+*(1) Check the model assumptions.*
 
 ```{r}
-library(caret)
+#checking assumptions
+par(mfrow = c(2, 2))
+plot(fit_bth)
+```
 
+For `Residuals vs Fitted plot`, it is used to detect unequal error variance (heteroscedasticity) and outliers. Basically, the plot shows residual values bounce around 0. Except `Hawaii`, they are in the range of (-1.5, 1.5) indicating only `Hawaii` could be a potential outlier.  
+
+For `Q-Q plot`, it is used to detect non-normality of residuals and outliers. The plot shows a straight line indicating residuals are normal. `Hawaii` is an extreme point to some degree.  
+
+For `Scale-Location plot` (`Standardized Residuals ~ Fitted plot`), it is used to detect unequal error variance (heteroscedasticity). The variances are equal.  
+
+For `Residuals vs Leverage plot`, it is used to detect influential cases. We notice that `Hawaii` is just on the Cook's distance line at the upper right corner. `Hawaii` could be an influential case.  
+
+Overall, assumptions of regression are met.  
+
+```{r}
+#delete extreme outlier `Hawaii`
+fit_bth_de = lm(`Life Exp` ~ ., data = sta_tidy[- 11, ]) |>
+  step(direction = "both")
+
+tibble(
+  original_fit = summary(fit_bth)$adj.r.squared,
+  deletion_fit = summary(fit_bth_de)$adj.r.squared
+) |>
+  knitr::kable(digits = 2)
+```
+
+*(2) Test the model predicative ability using a 10-fold cross-validation.*
+
+```{r}
 #cross validation
 train = trainControl(method = "cv", number = 5)
 
-model_cv = train(`Life Exp` ~ Murder + `HS Grad` + Frost + Population_t, data = sta_tidy, method = 'lm', na.action = na.pass)
+model_cv = train(`Life Exp` ~ Murder + `HS Grad` + Frost + Population_t, data = sta_tidy[- 11, ], method = 'lm', na.action = na.pass)
 
 model_cv$finalModel
 
 print(model_cv)
+summary(model_cv)$adj.r.squared
 ```
 
+R squared of cross validation is `r round(summary(model_cv)$adj.r.squared, 2)`, suggesting the model fits quite well and it explains a great proportion of outcome `Life Exp`.  
 
+**(g)** 
+
+From analysis concerning with relevant data set, we find out several indicators which would predict a large proportion of the target outcome.  
+
+In pre-processing procedure, we use log function to transform some variables which do not follow a normal distribution.  
+
+By using automatic variables selection procedure (stepwise), criterion-based procedure and LASSO, we get the best subset of the variables, which contains `Murder`, `HS Grad`, `Frost`, `Population_t`. These variables are with the highest adjusted r squared, lowest Cp and BIC.  
+
+After generating our final model, we check the basic assumptions. We notice that assumption of equal variance is met and assumption of residual normality is met. But one extreme case (`Hawaii`) is detected and it has been removed in later analysis.  
+
+Lastly, a 10-fold cross-validation is taken into account and the model is shown fitting quite well according to the adjusted r squared result. This suggests that the final model can successfully predict life expectancy among states as the investigator requests.  
 
 
 
