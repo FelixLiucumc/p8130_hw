@@ -22,15 +22,26 @@ set.seed(123)
 
 ```{r}
 #load data set
-sta_data = as.data.frame(state.x77)
-sta_data |> 
-  summary() |> 
-  knitr::kable(digits = 1)
+sta_data =
+  as.data.frame(state.x77)
+
+'sta_data |>
+  mutate(state = rownames(state.x77))
+rownames(sta_data) = NULL'
+
+sum_sta = 
+  sta_data |>
+  skimr::skim() |>
+  select(skim_variable, numeric.mean, numeric.sd, numeric.p0, numeric.p25, numeric.p50, numeric.p75, numeric.p100)
+
+colnames(sum_sta) = c("Variable", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max")
+
+knitr::kable(x = sum_sta, caption = "Variables pre-analysis", digits = 1)
 ```
 
 Continuous variables includes `Population`, `Income`, `Illiteracy`, `Life Exp`, `Murder`, `HS Grad`, `Frost`, `Area`.\
 
-No variable listed in the data set is categorical.\
+Only variable `state` in the data set is categorical.\
 
 **(b)** 
 
@@ -168,7 +179,7 @@ lambda_seq = 10^seq(-2, 1, by = 0.1)
 ```
 
 
-```{r}
+```{r warning = FALSE}
 cv_res =
   cv.glmnet(x = as.matrix(sta_tidy[2:8]), y = sta_tidy$`Life Exp`, data = sta_tidy, 
             lambda = lambda_seq, nfolds = 5)
