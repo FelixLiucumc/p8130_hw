@@ -32,7 +32,8 @@ rownames(sta_data) = NULL'
 sum_sta = 
   sta_data |>
   skimr::skim() |>
-  select(skim_variable, numeric.mean, numeric.sd, numeric.p0, numeric.p25, numeric.p50, numeric.p75, numeric.p100)
+  select(skim_variable, numeric.mean, numeric.sd, 
+         numeric.p0, numeric.p25, numeric.p50, numeric.p75, numeric.p100)
 
 colnames(sum_sta) = c("Variable", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max")
 
@@ -81,11 +82,13 @@ par(mfrow = c(3, 3), mar = c(4, 4, 2, 2))
 for (i in seq(1, 5, 2)) {
   #untransformed variables
   sta_transformed[,i] |>
-    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i])), xlab = colnames(sta_transformed[i]), freq = T, col = 2)
+    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i])), 
+         xlab = colnames(sta_transformed[i]), freq = T, col = 2)
   
   #log transformed variables
   sta_transformed[,i+1] |>
-    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i+1])), xlab = colnames(sta_transformed[i+1]), freq = T, col = 2)
+    hist(main = str_c("Hisogram of ", colnames(sta_transformed[i+1])), 
+         xlab = colnames(sta_transformed[i+1]), freq = T, col = 2)
   
   #Q-Q plot
   qqnorm(sta_transformed[,i+1], col = 2, pch = 19, cex = 0.5)
@@ -259,7 +262,8 @@ tibble(
 #cross validation
 train = trainControl(method = "cv", number = 5)
 
-model_cv = train(`Life Exp` ~ Murder + `HS Grad` + Frost + Population_t, data = sta_tidy[- 11, ], method = 'lm', na.action = na.pass)
+model_cv = train(`Life Exp` ~ Murder + `HS Grad` + Frost + Population_t, 
+                 data = sta_tidy[- 11, ], method = 'lm', na.action = na.pass)
 
 model_cv$finalModel
 
